@@ -13,20 +13,20 @@ var centerStyle = gloss.NewStyle()
 var textStyle = gloss.NewStyle().Foreground(gloss.Color("#888888")).Inline(true)
 var inputStyle = gloss.NewStyle().Foreground(gloss.Color("#ffffff")).Inline(true)
 var errorStyle = gloss.NewStyle().Foreground(gloss.Color("#ff0000")).Inline(true)
-var cursorStyle = gloss.NewStyle().Background(gloss.Color("#ffffff")).Foreground(gloss.Color("#111111")).Blink(false).Inline(true)
+var cursorStyle = gloss.NewStyle().Background(gloss.Color("#ffffff")).Inline(true).Blink(true)
 var termWidth int
 var termHeight int
 
 type model struct {
-	text string
-	input string
+	text    string
+	input   string
 	errText string
 }
 
 func initialModel() model {
-	return model {
-		text: "lorem this is a lot of text, like a  lot a lot if text nlike a bunch of text",
-		input: "",
+	return model{
+		text:    "Lorem ipsum dolor sit amet, officia excepteur ex fugiat reprehenderit enim labore culpa sint ad nisi Lorem pariatur mollit ex esse exercitation amet. Nisi anim cupidatat excepteur officia. Reprehenderit nostrud nostrud ipsum Lorem est aliquip amet voluptate voluptate dolor minim nulla est proident. Nostrud officia pariatur ut officia. Sit irure elit esse ea nulla sunt ex occaecat reprehenderit commodo officia dolor Lorem duis laboris cupidatat officia voluptate. Culpa proident adipisicing id nulla nisi laboris ex in Lorem sunt duis officia eiusmod. Aliqua reprehenderit commodo ex non excepteur duis sunt velit enim. Voluptate laboris sint cupidatat ullamco ut ea consectetur et est culpa et culpa duis.",
+		input:   "",
 		errText: "",
 	}
 }
@@ -39,7 +39,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if len(m.text) == 0 {
 		return m, tea.Quit
 	}
-	
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.String() == "ctrl+c" || msg.String() == "ctrl+q" {
@@ -57,7 +57,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		*/
 		centerStyle = centerStyle.Width(termWidth).Height(termHeight).Align(gloss.Center).MaxWidth(termWidth / 2)
 	}
-	
+
 	return m, nil
 }
 
@@ -74,9 +74,9 @@ func formatText(text string) string {
 	}
 	words := strings.Fields(text)
 	var outputText string
-	var lineNum int
+	var lineNum int = 0
 	for _, word := range words {
-		if len(strings.Split(outputText, "\n")[lineNum]) + len(word) > termWidth / 2 {
+		if len(strings.Split(outputText, "\n")[lineNum])+len(word) > termWidth/2 {
 			outputText += "\n" + word + " "
 			lineNum++
 		} else {
@@ -87,11 +87,13 @@ func formatText(text string) string {
 }
 
 func (m model) View() string {
-	if len(m.text) >= 1 {
-		return centerStyle.Render(inputStyle.Render(m.input) + cursorStyle.Render(string(m.text[0])) + textStyle.Render(m.text[1:]))
-	} else {
-		return centerStyle.Render(inputStyle.Render(m.input))
-	}
+	return formatText(inputStyle.Render(m.input) + cursorStyle.Render(string(m.text[0])) + textStyle.Render(m.text[1:]))
+	/*
+		if len(m.text) >= 1 {
+			return centerStyle.Render(text)
+		} else {
+			return centerStyle.Render(text)
+		}*/
 }
 
 func main() {
