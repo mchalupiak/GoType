@@ -13,9 +13,12 @@ var centerStyle = gloss.NewStyle()
 var textStyle = gloss.NewStyle().Foreground(gloss.Color("#888888")).Inline(true)
 var inputStyle = gloss.NewStyle().Foreground(gloss.Color("#ffffff")).Inline(true)
 var errorStyle = gloss.NewStyle().Foreground(gloss.Color("#ff0000")).Inline(true)
-var cursorStyle = gloss.NewStyle().Background(gloss.Color("#ffffff")).Inline(true).Blink(true)
+var cursorStyle = gloss.NewStyle().Foreground(gloss.Color("#000000")).Background(gloss.Color("#ffffff")).Inline(true)
+//var cursorStyle = gloss.NewStyle().Inline(true).Blink(true)
 var termWidth int
 var termHeight int
+var text_index = 0
+var input_lengths []int
 
 type model struct {
 	text    string
@@ -45,7 +48,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+c" || msg.String() == "ctrl+q" {
 			return m, tea.Quit
 		} else {
-			UpdateText(msg.String(), &m)
+			UpdateText(msg.String(), &m, msg.String() == "backspace")
 		}
 
 	case tea.WindowSizeMsg:
@@ -61,11 +64,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func UpdateText(input string, m *model) {
-	if input[0] == m.text[0] {
-		m.input += input
-		m.text = m.text[1:]
-	}
+func UpdateText(input string, m *model, backspace bool) {
+    if backspace {
+        top := len(input_lengths) - 1
+        text_index -= 1
+        m.input = m.input[:len(m.input)-input_lengths[top]]
+        input_lengths = input_lengths[:top]
+    } else if input[0] == m.text[text_index] {
+        letter := inputStyle.Render(input)
+        input_lengths = append(input_lengths, len(letter))
+		m.input += letter
+        text_index += 1
+	}  else {
+        letter := errorStyle.Render(input)
+        input_lengths = append(input_lengths, len(letter))
+        m.input += letter
+        text_index += 1
+    }
 }
 
 func formatText(text string) string {
@@ -87,7 +102,7 @@ func formatText(text string) string {
 }
 
 func (m model) View() string {
-	return formatText(inputStyle.Render(m.input) + cursorStyle.Render(string(m.text[0])) + textStyle.Render(m.text[1:]))
+    return (m.input + cursorStyle.Render(string(m.text[text_index])) + textStyle.Render(m.text[text_index+1:]))
 	/*
 		if len(m.text) >= 1 {
 			return centerStyle.Render(text)
